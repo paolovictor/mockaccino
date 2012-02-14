@@ -42,18 +42,17 @@ class UnexpectedCallError(Exception):
 
 
 class Expectation(object):
-    def __init__(self, method, args=None, kwargs=None, returns=False,
-                 to_return=None, to_raise=None, times = 0):
+    def __init__(self, method, args=None, kwargs=None):
         self.method = method
         self.args = args
         self.kwargs = kwargs
-        self.returns = returns
-        self.to_return = to_return
-        self.to_raise = to_raise
-        self.times = 0
+        self.returns = False
+        self.to_return = None
+        self.to_raise = None
+        self._times = 0
 
     def count_down(self):
-        self.times -= 1
+        self._times -= 1
 
     def check(self, method, args, kwargs):
         if (self.method != method or self.args != args or
@@ -61,7 +60,7 @@ class Expectation(object):
             raise UnexpectedCallError()
 
     def depleted(self):
-        return self.times <= 0
+        return self._times <= 0
            
     def outcome(self):
         if self.to_raise:
@@ -75,10 +74,15 @@ class Expectation(object):
     def will_return(self, value):
         self.returns = True
         self.to_return = value
+        return self
 
     def will_raise(self, error):
         self.to_raise = error
+        return self
 
+    def times(self, times):
+        self._times = times
+        return self
 
 class MockMethod(object):
     '''
@@ -90,18 +94,6 @@ class MockMethod(object):
 
     def __call__(self, *args, **kwargs):
         return self.__parent._invoked(self, args, kwargs)
-
-    def times(self, num_expected_calls):
-        self.__parent._times(num_expected_calls)
-        return self
-
-    def will_raise(self, error):
-        self.__parent._will_raise(error)
-        return self
-
-    def will_return(self, return_value):
-        self.__parent._will_return(return_value)
-        return self
 
 
 class Mock(object):
@@ -145,13 +137,4 @@ class Mock(object):
             self.__current_expectation = Expectation(mock_method.name,
                     args, kwargs)
 
-            return mock_method
-
-    def _times(self, num_expected_calls):
-        self.__current_expectation.times = num_expected_calls
-
-    def _will_return(self, value):
-        self.__current_expectation.will_return(value)
-       
-    def _will_raise(self, error):
-        self.__current_expectation.will_raise(error) 
+            return self.__current_expectation
