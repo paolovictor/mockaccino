@@ -41,47 +41,81 @@ class UnexpectedCallError(Exception):
     pass
 
 
+class Expectation(object):
+    def __init__(self, method, args=None, kwargs=None, returns=False,
+                 to_return=None, to_raise=None, times = 0):
+        self.method = method
+        self.args = args
+        self.kwargs = kwargs
+        self.returns = returns
+        self.to_return = to_return
+        self.to_raise = to_raise
+        self.times = 0
+
+    def count_down(self):
+        self.times -= 1
+
+    def check(self, method, args, kwargs):
+        if (self.method != method or self.args != args or
+            self.kwargs != kwargs):
+            raise UnexpectedCallError()
+
+    def depleted(self):
+        return self.times <= 0
+           
+    def outcome(self):
+        if self.to_raise:
+            raise self.to_raise
+        elif self.returns:
+            return self.to_return
+
+    def returns(self):
+        return self.returns
+
+    def will_return(self, value):
+        self.returns = True
+        self.to_return = value
+
+    def will_raise(self, error):
+        self.to_raise = error
+
+
 class MockMethod(object):
     '''
     Class used to override a mocked class' methods
     '''
-
     def __init__(self, name, parent):
         self.name = name
         self.__parent = parent
 
-        self.__num_calls = 1
-        self.__to_raise = None
-
     def __call__(self, *args, **kwargs):
-        if self.__num_calls > 0:
-            self.__num_calls -= 1
-
         return self.__parent._invoked(self, args, kwargs)
 
-    def is_depleted(self):
-        return self.__num_calls == 0
-
     def times(self, num_expected_calls):
-        self.__num_calls = num_expected_calls
+        self.__parent._times(num_expected_calls)
+        return self
 
     def will_raise(self, error):
-        self.__to_raise = error
+        self.__parent._will_raise(error)
+        return self
 
-    def should_raise(self):
-        return self.__to_raise is not None
-
-    def do_raise(self):
-        raise self.__to_raise
+    def will_return(self, return_value):
+        self.__parent._will_return(return_value)
+        return self
 
 
 class Mock(object):
     def __init__(self):
-        self.__calls = []
+        self.__current_expectation = None
+        self.__expectations = []
         self.replay_mode = False
 
     def enter_replay_mode(self):
         self.replay_mode = True
+
+        if self.__current_expectation:
+            self.__expectations.append(self.__current_expectation)
+            
 
     def _invoked(self, mock_method, args, kwargs):
         '''
@@ -90,25 +124,34 @@ class Mock(object):
         of arguments does matter, the order of keyword arguments doesn't.
         '''
         if self.replay_mode:
-            if not self.__calls:
+            if not self.__expectations:
                 raise UnexpectedCallError("No more method calls are expected")
 
-            expected_name, expected_args, expected_kwargs = self.__calls[0]
+            expectation = self.__expectations[0]
+            expectation.check(mock_method.name, args, kwargs)
 
-            if mock_method.is_depleted():
-                del self.__calls[0]
+            expectation.count_down()
+            if expectation.depleted():
+                del self.__expectations[0]
 
-            if (mock_method.name != expected_name or args != expected_args or
-                kwargs != expected_kwargs):
-                raise UnexpectedCallError("Unexpected method call. Expected \
-                        %s(args=%s, kwargs=%s], got %s(args=%s, kwargs=%s)." %
-                        (expected_name, expected_args.__str__,
-                         expected_kwargs.__str__, mock_method.name,
-                         args.__str__, kwargs.__str__))
-
-            if mock_method.should_raise():
-                mock_method.do_raise()
+            if expectation.returns:
+                return expectation.outcome()
+            else:
+                expectation.outcome()
         else:
-            self.__calls.append((mock_method.name, args, kwargs))
+            if self.__current_expectation:
+                self.__expectations.append(self.__current_expectation)
+    
+            self.__current_expectation = Expectation(mock_method.name,
+                    args, kwargs)
 
             return mock_method
+
+    def _times(self, num_expected_calls):
+        self.__current_expectation.times = num_expected_calls
+
+    def _will_return(self, value):
+        self.__current_expectation.will_return(value)
+       
+    def _will_raise(self, error):
+        self.__current_expectation.will_raise(error) 

@@ -19,6 +19,15 @@ It's a work in progress.
 
 Changelog
 
+0.0.1alpha
+
+- Implemented will_return modifier. Now I'm using a Expectation-based
+  approach, that records Expectations when mock methods are invoked
+  and check then on replay mode, instead of storing data on the mock
+  methods themselves.
+
+  Now the Calc test is possible. Check tests.py :)
+
 Feb142012 - 11AM
 
 - Implemented times and will_raise method modifier

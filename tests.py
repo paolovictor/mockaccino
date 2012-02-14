@@ -242,3 +242,98 @@ class MockTests(unittest.TestCase):
         mockaccino.replay(mock)
 
         mock.method_that_returns_an_int()
+
+    def test_will_return_single_call(self):
+        '''
+        A mock method modified with will_return should return the correct
+        value
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int().will_return(1)
+
+        mockaccino.replay(mock)
+
+        assert mock.method_that_returns_an_int() == 1
+
+    def test_will_return_two_calls(self):
+        '''
+        A mock method modified with will_return should return the correct
+        value on two different calls for the same method
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int().will_return(1)
+        mock.method_that_returns_an_int().will_return(2)
+
+        mockaccino.replay(mock)
+
+        assert mock.method_that_returns_an_int() == 1
+        assert mock.method_that_returns_an_int() == 2
+
+    def test_will_return_and_times_modifier(self):
+        '''
+        will_return should work with times modifier
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int().will_return(1).times(2)
+
+        mockaccino.replay(mock)
+
+        assert mock.method_that_returns_an_int() == 1
+        assert mock.method_that_returns_an_int() == 1
+
+    def test_mockaccino_warps_math(self):
+        '''
+        mockaccino should be able to distort math to do my bidding
+        '''
+        class Calc(object):
+            def sum(self, a, b):
+                return a + b
+
+            def is_even(self, n):
+                return n % 2 == 0
+
+        calc = Calc()
+
+        assert calc.sum(2, 2) == 4
+        assert calc.sum(1, 1) == 2
+        assert calc.is_even(2)
+
+        mock = mockaccino.create_mock(Calc)
+        
+        mock.sum(2, 2).will_return(5)
+        mock.sum(1, 1).will_return(-1)
+        mock.is_even(2).will_return(False)
+
+        mockaccino.replay(mock)
+
+        # BAM! 2 + 2 is now 5!
+        assert mock.sum(2, 2) == 5
+
+        # PRESTO! 1 + 1 is now -1!
+        assert mock.sum(1, 1) == -1
+
+        # BAZINGA! 2 is now odd!
+        assert mock.is_even(2) is False
+
+    def test_mixed_repeated_and_single_calls(self):
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int().will_return(1)
+        mock.method_that_returns_an_int().will_return(2).times(2)
+        mock.method_with_parameter(2).times(2)
+        mock.method_with_two_parameters(3, 4).will_return("String").times(2)
+        mock.method_with_no_return_value()
+
+        mockaccino.replay(mock)
+
+        assert mock.method_that_returns_an_int() == 1
+        assert mock.method_that_returns_an_int() == 2
+        assert mock.method_that_returns_an_int() == 2
+        mock.method_with_parameter(2)
+        mock.method_with_parameter(2)
+        assert mock.method_with_two_parameters(3, 4) == "String"
+        assert mock.method_with_two_parameters(3, 4) == "String"
+        mock.method_with_no_return_value()
