@@ -1,0 +1,18 @@
+I didn't like the "mock" module, so I'm making one myself for educational purposes.
+
+The goal is to be able to write something like this:
+
+    class Calc(object):
+        def sum(self, a, b):
+            return a + b
+
+    # 2 + 2 = 4? Not for long!
+    mock = mockacino.createMock(Calc)
+
+    mock.sum(2, 2).will_return(5)
+
+    mockacino.replay(mock)
+
+    assert mock.sum(2, 2) == 5 # Take that, math!
+
+It's a work in progress.
