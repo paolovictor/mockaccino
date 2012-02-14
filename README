@@ -7,7 +7,7 @@ The goal is to be able to write something like this:
             return a + b
 
     # 2 + 2 = 4? Not for long!
-    mock = mockaccino.createMock(Calc)
+    mock = mockaccino.create_mock(Calc)
 
     mock.sum(2, 2).will_return(5)
 
@@ -25,14 +25,14 @@ Feb142012 - 11AM
 
   Now you should be able to do something like:
   
-    mock = mockaccino.createMock(self.MockedClass)
+    mock = mockaccino.create_mock(self.MockedClass)
     mock.method_that_returns_an_int().will_raise(ValueError)
     mockaccino.replay(mock)
     mock.method_that_returns_an_int()
 
   And it will raise a ValueError or
 
-    mock = mockaccino.createMock(self.MockedClass)
+    mock = mockaccino.create_mock(self.MockedClass)
     mock.method_that_returns_an_int().times(2)
     mockaccino.replay(mock)
     mock.method_that_returns_an_int()
