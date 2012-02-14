@@ -23,7 +23,7 @@ class MockTests(unittest.TestCase):
         An UnexpectedCallError should be raised if the mock is on replay
         mode and an unexpected method is invoked
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         mockaccino.replay(mock)
 
@@ -34,7 +34,7 @@ class MockTests(unittest.TestCase):
         '''
         Calls on record mode never raise errors
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # This is okay, the method is on record mode
         mock.method_that_returns_an_int()
@@ -43,7 +43,7 @@ class MockTests(unittest.TestCase):
         '''
         A call to an expected method should not raise an error
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_that_returns_an_int()
@@ -58,7 +58,7 @@ class MockTests(unittest.TestCase):
         A call to a method different to what was recorded should raise
         an unexpected call error
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_that_returns_an_int()
@@ -74,7 +74,7 @@ class MockTests(unittest.TestCase):
         A call to a method with diferent arguments than what was recorded
         should raise an unexpected call error
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(1)
@@ -89,7 +89,7 @@ class MockTests(unittest.TestCase):
         A call to a method with the same arguments as was recorded should raise
         no errors
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(1)
@@ -104,7 +104,7 @@ class MockTests(unittest.TestCase):
         A call to a method with diferent kwargs than what was recorded
         should raise an unexpected call error
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(parameter=1)
@@ -119,7 +119,7 @@ class MockTests(unittest.TestCase):
         A call to a method with the same kwargs was recorded should raise
         no errors
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(parameter=1)
@@ -134,7 +134,7 @@ class MockTests(unittest.TestCase):
         An unexpected call error should be raised if a method mock is invoked
         with a wrong argument order
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_two_parameters(0, 1)
@@ -150,7 +150,7 @@ class MockTests(unittest.TestCase):
         An equal, with same parameters, unexpected call after an
         expected call raises an error
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(0)
@@ -168,7 +168,7 @@ class MockTests(unittest.TestCase):
         Am equal, but with differente parameters, unexpected call after an
         expected call raises an error
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(0)
@@ -184,7 +184,7 @@ class MockTests(unittest.TestCase):
         '''
         The times() mock method modifier should allow multiple calls
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(0).times(2)
@@ -201,7 +201,7 @@ class MockTests(unittest.TestCase):
         If the method is called more times than specified, an error
         should be raised
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(0).times(2)
@@ -217,7 +217,7 @@ class MockTests(unittest.TestCase):
         '''
         After a method is called enough times, the next expectiation should be set
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         # Recorded a method with no return value
         mock.method_with_parameter(0).times(2)
@@ -235,7 +235,7 @@ class MockTests(unittest.TestCase):
         '''
         Mock methods configured to raise errors should do so when invoked
         '''
-        mock = mockaccino.createMock(self.MockedClass)
+        mock = mockaccino.create_mock(self.MockedClass)
 
         mock.method_that_returns_an_int().will_raise(ValueError)
 

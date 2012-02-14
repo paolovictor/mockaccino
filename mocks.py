@@ -3,7 +3,7 @@
 import inspect
 
 
-def createMock(cls):
+def create_mock(cls):
     '''
     Returns a mock object for the given class. The returned mock is on record
     mode by default
@@ -14,11 +14,13 @@ def createMock(cls):
 
     mock = Mock()
 
-    for n, a in [(n, a) for (n, a) in inspect.getmembers(cls) if inspect.ismethod(a)]:
+    for n, a in [(n, a) for (n, a) in inspect.getmembers(cls)\
+                                   if inspect.ismethod(a)]:
         try:
             setattr(mock, n, MockMethod(n, mock))
         except AttributeError:
-            pass # read-only methods are not mocked
+            # Read-only methods are not mocked
+            pass
 
     return mock
 
