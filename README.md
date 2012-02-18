@@ -9,7 +9,7 @@ The basic way to use it is:
 1. Create a mock object for the class you want to mock
 2. Invoke methods on this mock, applying modifiers such as what the call will return and how many times it will happen
 3. Put the mock on replay mode
-4. Continue the test. Invocations to a mock object's methods will be matched sequentially, the call is recorded with an "always" modifier
+4. Continue the test. Invocations to a mock object's methods will be matched sequentially, unless the call is recorded with an "always" modifier (more on that later)
 
 ## Code example
 
