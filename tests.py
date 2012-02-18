@@ -421,3 +421,37 @@ class MockTests(unittest.TestCase):
 
         # Last expectation is only saved on replay
         mockaccino.replay(mock)
+
+    @raises(ValueError)
+    def test_only_exceptions_may_be_raised(self):
+        '''
+        Overriding previously recorded methods with always is not
+        allowed either
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int().will_raise("")
+
+    def test_code_example(self):
+        '''
+        Code example from README is correct
+        '''
+        class Calc(object):
+            def sum(self, a, b):
+                return a + b
+
+            def is_even(self, n):
+                return n % 2 == 0
+
+        mock = mockaccino.create_mock(Calc)
+
+        mock.sum(1, 1).will_return(3).always()
+        mock.is_even(2).will_return(False)
+        mock.is_even(3).will_return(True)
+
+        mockaccino.replay(mock)
+
+        assert mock.sum(1, 1) == 3
+        assert not mock.is_even(2)
+        assert mock.sum(1, 1) == 3
+        assert mock.is_even(3)
