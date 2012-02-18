@@ -83,6 +83,6 @@ The currently implemented expectation modifiers are:
 
 ## Roadmap
 
-1. Add support for "magic method" (__eq__, __str__, etc) mocking
+1. Add support for "magic method" (\_\_eq\_\_, \_\_str\_\_, etc) mocking
 2. Implement a "verify" method that checks if there are unmatched calls
-2. Implement a "never" call modifier that tells that the method should never be calld
+2. Implement a "never" call modifier that tells that the method should never be called
