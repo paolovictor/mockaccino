@@ -38,10 +38,18 @@ class UnexpectedCallError(Exception):
     '''
     Exception thrown when an unexpected call is invoked on a moc
     '''
-    pass
+    def __init__(self, expected=None, got=None, message=None):
+        super(Exception, message)
+        self.expected = expected
+        self.got = got
+
+    def __str__(self):
+        return "Expected %s, got %s" % (self.expected, self.got)
 
 
 class Expectation(object):
+    ALWAYS = -1
+
     def __init__(self, method, args=None, kwargs=None):
         self.method = method
         self.args = args
@@ -57,19 +65,20 @@ class Expectation(object):
     def check(self, method, args, kwargs):
         if (self.method != method or self.args != args or
             self.kwargs != kwargs):
-            raise UnexpectedCallError()
+            raise UnexpectedCallError((self.method, self.args, self.kwargs),
+                    (method, args, kwargs))
 
     def depleted(self):
         return self._times <= 0
-           
+
     def outcome(self):
         if self.to_raise:
             raise self.to_raise
         elif self.returns:
             return self.to_return
 
-    def returns(self):
-        return self.returns
+    def is_always_expected(self):
+        return self._times == Expectation.ALWAYS
 
     def will_return(self, value):
         self.returns = True
@@ -77,12 +86,22 @@ class Expectation(object):
         return self
 
     def will_raise(self, error):
+        if not error or not isinstance(error, Exception):
+            raise ValueError("Error paramenter should be an Exception or " +
+                             "a subclass of it")
+
         self.to_raise = error
         return self
 
     def times(self, times):
+        if times <= 0:
+            raise ValueError("Number of times must be greater than zero")
+
         self._times = times
         return self
+
+    def always(self):
+        self._times = Expectation.ALWAYS
 
 class MockMethod(object):
     '''
@@ -100,14 +119,33 @@ class Mock(object):
     def __init__(self):
         self.__current_expectation = None
         self.__expectations = []
+        self.__always_expected = {}
         self.replay_mode = False
+
+    def __save_current_expectation(self):
+        if not self.__current_expectation:
+            return
+
+        method_name = self.__current_expectation.method
+        recorded_methods = set((e.method for e in self.__expectations))
+
+        if self.__current_expectation.is_always_expected():
+            if method_name in recorded_methods:
+                raise ValueError("Method already recorded without a " +
+                                 "'always' modifier")
+
+            self.__always_expected[method_name] = self.__current_expectation
+        elif method_name in self.__always_expected:
+            raise ValueError("Method already recorded with a " +
+                             "'always' modifier")
+        else:
+            self.__expectations.append(self.__current_expectation)
 
     def enter_replay_mode(self):
         self.replay_mode = True
 
         if self.__current_expectation:
-            self.__expectations.append(self.__current_expectation)
-            
+            self.__save_current_expectation()
 
     def _invoked(self, mock_method, args, kwargs):
         '''
@@ -116,24 +154,27 @@ class Mock(object):
         of arguments does matter, the order of keyword arguments doesn't.
         '''
         if self.replay_mode:
-            if not self.__expectations:
+            expectation = None
+
+            if mock_method.name in self.__always_expected:
+                expectation = self.__always_expected[mock_method.name]
+            elif self.__expectations:
+                expectation = self.__expectations[0]
+            else:
                 raise UnexpectedCallError("No more method calls are expected")
 
-            expectation = self.__expectations[0]
             expectation.check(mock_method.name, args, kwargs)
 
-            expectation.count_down()
-            if expectation.depleted():
-                del self.__expectations[0]
+            if not expectation.is_always_expected():
+                expectation.count_down()
 
-            if expectation.returns:
-                return expectation.outcome()
-            else:
-                expectation.outcome()
+                if expectation.depleted():
+                    del self.__expectations[0]
+
+            return expectation.outcome()
         else:
-            if self.__current_expectation:
-                self.__expectations.append(self.__current_expectation)
-    
+            self.__save_current_expectation()
+
             self.__current_expectation = Expectation(mock_method.name,
                     args, kwargs)
 

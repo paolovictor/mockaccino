@@ -179,7 +179,7 @@ class MockTests(unittest.TestCase):
         # Second invocation the same call, but it's unexpected
         mock.method_with_parameter(0)
         mock.method_with_parameter(2)
-    
+
     def test_times_mock_method_modifier(self):
         '''
         The times() mock method modifier should allow multiple calls
@@ -212,7 +212,7 @@ class MockTests(unittest.TestCase):
         mock.method_with_parameter(0)
         mock.method_with_parameter(0)
         mock.method_with_parameter(0)
-    
+
     def test_call_after_times_modifier(self):
         '''
         After a method is called enough times, the next expectiation should be set
@@ -302,7 +302,7 @@ class MockTests(unittest.TestCase):
         assert calc.is_even(2)
 
         mock = mockaccino.create_mock(Calc)
-        
+
         mock.sum(2, 2).will_return(5)
         mock.sum(1, 1).will_return(-1)
         mock.is_even(2).will_return(False)
@@ -319,6 +319,9 @@ class MockTests(unittest.TestCase):
         assert mock.is_even(2) is False
 
     def test_mixed_repeated_and_single_calls(self):
+        '''
+        Testing multiple mixed operations
+        '''
         mock = mockaccino.create_mock(self.MockedClass)
 
         mock.method_that_returns_an_int().will_return(1)
@@ -337,3 +340,84 @@ class MockTests(unittest.TestCase):
         assert mock.method_with_two_parameters(3, 4) == "String"
         assert mock.method_with_two_parameters(3, 4) == "String"
         mock.method_with_no_return_value()
+
+    def test_mock_stringio_getvalue(self):
+        '''
+        Mockaccino should be able to mock StringIO from the standard library
+        '''
+        import StringIO
+
+        mock = mockaccino.create_mock(StringIO.StringIO)
+
+        mock.getvalue().will_return("mocked")
+
+        mockaccino.replay(mock)
+
+        assert mock.getvalue() == "mocked"
+
+    @raises(ValueError)
+    def test_mock_stringio_to_make_close_raise(self):
+        '''
+        Mockaccino should be able to mock raised errors on StringIO
+        '''
+        import StringIO
+
+        mock = mockaccino.create_mock(StringIO.StringIO)
+
+        mock.close().will_raise(ValueError)
+
+        mockaccino.replay(mock)
+
+        mock.close()
+
+    def test_always_modifier(self):
+        '''
+        Always modifier should allow any number of method calls
+        on no particular order
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        # method_with_parameter should be called before
+        # method_with_no_return_value, and method_that_returns_an_int
+        # may be called any times in between
+        mock.method_that_returns_an_int().will_return(1).always()
+        mock.method_with_parameter(2)
+        mock.method_with_no_return_value()
+
+        mockaccino.replay(mock)
+
+        assert mock.method_that_returns_an_int() == 1
+        mock.method_with_parameter(2)
+        assert mock.method_that_returns_an_int() == 1
+        assert mock.method_that_returns_an_int() == 1
+        mock.method_with_no_return_value()
+        assert mock.method_that_returns_an_int() == 1
+        assert mock.method_that_returns_an_int() == 1
+        assert mock.method_that_returns_an_int() == 1
+
+    @raises(ValueError)
+    def test_error_raised_when_trying_to_override_always(self):
+        '''
+        Overriding an always modifier should not be allowed
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int().will_return(1).always()
+        mock.method_that_returns_an_int()
+
+        # Last expectation is only saved on replay
+        mockaccino.replay(mock)
+
+    @raises(ValueError)
+    def test_error_raised_when_overriding_recorded_with_always(self):
+        '''
+        Overriding previously recorded methods with always is not
+        allowed either
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_that_returns_an_int()
+        mock.method_that_returns_an_int().will_return(1).always()
+
+        # Last expectation is only saved on replay
+        mockaccino.replay(mock)
