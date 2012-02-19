@@ -3,24 +3,25 @@
 import inspect
 
 
-def create_mock(cls):
+def create_mock(to_mock):
     '''
     Returns a mock object for the given class. The returned mock is on record
     mode by default
     '''
-
-    if not inspect.isclass(cls):
-        raise ValueError("Tried to mock something that is not a class")
-
     mock = Mock()
 
-    for n, a in [(n, a) for (n, a) in inspect.getmembers(cls)\
-                                   if inspect.ismethod(a)]:
-        try:
-            setattr(mock, n, MockMethod(n, mock))
-        except AttributeError:
-            # Read-only methods are not mocked
-            pass
+    if inspect.isclass(to_mock):
+        for n, a in [(n, a) for (n, a) in inspect.getmembers(to_mock)\
+                                       if inspect.ismethod(a)]:
+            try:
+                setattr(mock, n, MockMethod(n, mock))
+            except AttributeError:
+                # Read-only methods are not mocked
+                pass
+    elif inspect.isfunction(to_mock):
+        setattr(mock, '_called_as_function', MockMethod(to_mock.__name__, mock))
+    else:
+        raise ValueError("Only classes or functions may be mocked")
 
     return mock
 
@@ -48,6 +49,9 @@ class UnexpectedCallError(Exception):
 
 
 class Expectation(object):
+    '''
+    Represents an expectation about a method invocation
+    '''
     ALWAYS = -1
 
     def __init__(self, method, args=None, kwargs=None):
@@ -156,6 +160,8 @@ class Mock(object):
         if self.replay_mode:
             expectation = None
 
+            # If the method has an "always" modifier, the next expectation
+            # should not be dequeued
             if mock_method.name in self.__always_expected:
                 expectation = self.__always_expected[mock_method.name]
             elif self.__expectations:
@@ -165,6 +171,8 @@ class Mock(object):
 
             expectation.check(mock_method.name, args, kwargs)
 
+            # If the last method has no "always" modifier, its expected
+            # call count should be decreased
             if not expectation.is_always_expected():
                 expectation.count_down()
 
@@ -179,3 +187,14 @@ class Mock(object):
                     args, kwargs)
 
             return self.__current_expectation
+
+    def __call__(self, *args, **kwargs):
+        '''
+        Magic methods may only be changed on the class, before creating the
+        object. This workaround redirects the __call__ to a bound method that
+        may be changed after the object creation.
+        '''
+        return self._called_as_function(args, kwargs)
+
+    def _called_as_function(self, *args, **kwargs):
+        raise AttributeError("This method may only be called if overriden")

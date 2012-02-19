@@ -95,7 +95,6 @@ class MockTests(unittest.TestCase):
         mock.method_with_parameter(1)
 
         mockaccino.replay(mock)
-
         mock.method_with_parameter(1)
 
     @raises(mockaccino.UnexpectedCallError)
@@ -123,10 +122,27 @@ class MockTests(unittest.TestCase):
 
         # Recorded a method with no return value
         mock.method_with_parameter(parameter=1)
-
         mockaccino.replay(mock)
-
         mock.method_with_parameter(parameter=1)
+
+    def test_mixed_args_and_kwargs(self):
+        '''
+        Expectations should work for calls that mix args and kwargs
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+        mock.method_with_two_parameters(1, key="cat")
+        mockaccino.replay(mock)
+        mock.method_with_two_parameters(1, key="cat")
+
+    @raises(mockaccino.UnexpectedCallError)
+    def test_mixed_args_and_kwargs_wrong_parameters(self):
+        '''
+        Mismatched args and kwargs should raise errors
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+        mock.method_with_two_parameters(1, key="cat")
+        mockaccino.replay(mock)
+        mock.method_with_two_parameters(1, key="dog")
 
     @raises(mockaccino.UnexpectedCallError)
     def test_wrong_argument_order_raises_unexpected_call_error(self):
@@ -236,11 +252,8 @@ class MockTests(unittest.TestCase):
         Mock methods configured to raise errors should do so when invoked
         '''
         mock = mockaccino.create_mock(self.MockedClass)
-
         mock.method_that_returns_an_int().will_raise(ValueError)
-
         mockaccino.replay(mock)
-
         mock.method_that_returns_an_int()
 
     def test_will_return_single_call(self):
@@ -249,11 +262,8 @@ class MockTests(unittest.TestCase):
         value
         '''
         mock = mockaccino.create_mock(self.MockedClass)
-
         mock.method_that_returns_an_int().will_return(1)
-
         mockaccino.replay(mock)
-
         assert mock.method_that_returns_an_int() == 1
 
     def test_will_return_two_calls(self):
@@ -348,11 +358,8 @@ class MockTests(unittest.TestCase):
         import StringIO
 
         mock = mockaccino.create_mock(StringIO.StringIO)
-
         mock.getvalue().will_return("mocked")
-
         mockaccino.replay(mock)
-
         assert mock.getvalue() == "mocked"
 
     @raises(ValueError)
@@ -363,11 +370,8 @@ class MockTests(unittest.TestCase):
         import StringIO
 
         mock = mockaccino.create_mock(StringIO.StringIO)
-
         mock.close().will_raise(ValueError)
-
         mockaccino.replay(mock)
-
         mock.close()
 
     def test_always_modifier(self):
@@ -429,7 +433,6 @@ class MockTests(unittest.TestCase):
         allowed either
         '''
         mock = mockaccino.create_mock(self.MockedClass)
-
         mock.method_that_returns_an_int().will_raise("")
 
     def test_code_example(self):
@@ -455,3 +458,66 @@ class MockTests(unittest.TestCase):
         assert not mock.is_even(2)
         assert mock.sum(1, 1) == 3
         assert mock.is_even(3)
+
+        # Mocking functions
+        def function():
+            return 0
+
+        function_mock = mockaccino.create_mock(function)
+
+        function_mock().will_return(1)
+
+        mockaccino.replay(function_mock)
+
+        assert function_mock() == 1
+
+    def test_mock_function(self):
+        '''
+        Function mock that returns a value is correct
+        '''
+        def function_to_mock():
+            return 0
+
+        mock = mockaccino.create_mock(function_to_mock)
+        mock().will_return(1)
+        mockaccino.replay(mock)
+        assert mock() == 1
+
+    @raises(mockaccino.UnexpectedCallError)
+    def test_mock_unexpected_call_to_function(self):
+        '''
+        Unexpect call to function mock should also raise error
+        '''
+        def function_to_mock():
+            return 0
+
+        mock = mockaccino.create_mock(function_to_mock)
+        mock(1)
+        mockaccino.replay(mock)
+        mock(2)
+
+    @raises(ValueError)
+    def test_will_raise_on_function_mock(self):
+        '''
+        will_raise modifier should work on function mocks
+        '''
+        def function_to_mock():
+            return 0
+
+        mock = mockaccino.create_mock(function_to_mock)
+        mock().will_raise(ValueError)
+        mockaccino.replay(mock)
+        mock()
+
+    def test_times_on_function_mock(self):
+        '''
+        times modifier should work on function mocks
+        '''
+        def function_to_mock():
+            return 0
+
+        mock = mockaccino.create_mock(function_to_mock)
+        mock().will_return(1).times(2)
+        mockaccino.replay(mock)
+        assert mock() == 1
+        assert mock() == 1

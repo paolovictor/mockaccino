@@ -35,11 +35,23 @@ The basic way to use it is:
     print mock.sum(1, 1) # Prints 3
     print mock.is_even(3) # Prints True
 
+    # Mocking functions
+    def function():
+        return 0
+    
+    function_mock = mockaccino.create_mock(function)
+    
+    function_mock.will_return(1)
+
+    mockaccino.replay(function_mock)
+
+    print function_mock() # Prints 1
+
 ## Usage
 
 __Creating and changing mock state__
 
-* __mockaccino.create_mock(class)__ - returns a mock object for the specified class
+* __mockaccino.create_mock(class)__ - returns a mock object for the specified class or function
 * __mockaccino.replay(mock, ...)__ - sets one or more mocks on "replay mode", meaning that all upcoming calls will be matched against the recorded calls
 
 __Recording mocks__
@@ -85,4 +97,3 @@ The currently implemented expectation modifiers are:
 
 1. Add support for "magic method" (\_\_eq\_\_, \_\_str\_\_, etc) mocking
 2. Implement a "verify" method that checks if there are unmatched calls
-2. Implement a "never" call modifier that tells that the method should never be called
