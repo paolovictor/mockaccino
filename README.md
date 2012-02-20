@@ -11,6 +11,18 @@ The basic way to use it is:
 3. Put the mock on replay mode
 4. Continue the test. Invocations to a mock object's methods will be matched sequentially, unless the call is recorded with an "always" modifier (more on that later)
 
+## Installation
+
+[Mockaccino is on pipy](http://pypi.python.org/pypi/mockaccino). You may install it with:
+
+    pypi install mockaccino
+
+Or, if you want to install from the github repo:
+
+    git clone git://github.com/paolovictor/mockaccino.git
+    cd mockaccino
+    sudo python setup.py install
+
 ## Code example
 
     import mockaccino
