@@ -15,7 +15,7 @@ The basic way to use it is:
 
 [Mockaccino is on pipy](http://pypi.python.org/pypi/mockaccino). You may install it with:
 
-    pypi install mockaccino
+    pip install mockaccino
 
 Or, if you want to install from the github repo:
 
