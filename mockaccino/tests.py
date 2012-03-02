@@ -1,9 +1,35 @@
 # -*- coding: utf-8 -*-
+'''
+Copyright (c) 2010, Rhomobile, Inc.
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+    OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+    OTHER DEALINGS IN THE SOFTWARE.
+'''
 
 import unittest
 import mockaccino
+from mockaccino.matchers import any
 
 from nose.tools import raises
+
 
 class MockTests(unittest.TestCase):
     class MockedClass(object):
@@ -521,3 +547,74 @@ class MockTests(unittest.TestCase):
         mockaccino.replay(mock)
         assert mock() == 1
         assert mock() == 1
+
+    def test_matcher_any_class(self):
+        '''
+        Tests "any" type matcher for classes
+        '''
+        def function_to_mock(self, cls):
+            pass
+
+        mock = mockaccino.create_mock(function_to_mock)
+        mock(any(self.MockedClass)).times(2)
+
+        mockaccino.replay(mock)
+
+        mock(self.MockedClass())
+        mock(self.MockedClass())
+
+    @raises(mockaccino.UnexpectedCallError)
+    def test_matcher_any_fails_on_different_class(self):
+        '''
+        The "any" type matcher should not match values with different classes
+        '''
+        def function_to_mock(self, cls):
+            pass
+
+        mock = mockaccino.create_mock(function_to_mock)
+        mock(any(self.MockedClass))
+
+        mockaccino.replay(mock)
+
+        mock("not a mocked class!")
+
+    def test_matcher_any_int(self):
+        '''
+        The "any" type matcher should also work for primitive types
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_with_parameter(any(int)).always()
+
+        mockaccino.replay(mock)
+
+        mock.method_with_parameter(0)
+        mock.method_with_parameter(1)
+
+    def test_mix_any_matcher_with_exact_value(self):
+        '''
+        Any matcher and exact value parameter expectations can be mixed
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_with_two_parameters(1, any(basestring)).always()
+
+        mockaccino.replay(mock)
+
+        mock.method_with_two_parameters(1, "a")
+        mock.method_with_two_parameters(1, "cat")
+        mock.method_with_two_parameters(1, "dog")
+
+    @raises(mockaccino.UnexpectedCallError)
+    def test_mix_any_matcher_with_exact_value_fails_on_different_value(self):
+        '''
+        Mixed any matcher and exact value parameter expectation must fail
+        if exact value is different
+        '''
+        mock = mockaccino.create_mock(self.MockedClass)
+
+        mock.method_with_two_parameters(1, any(basestring)).always()
+
+        mockaccino.replay(mock)
+
+        mock.method_with_two_parameters(2, "a")

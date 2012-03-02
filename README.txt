@@ -92,6 +92,26 @@ The currently implemented expectation modifiers are:
 * will_return(x) - "This method will return x"
 * will_raise(e) - "This method will raise an error e"
 
+Matchers
+
+Matchers are expected parameter modifiers that let you write expectations with
+different value comparison criteria, such as "this parameter's value may be any
+int value"
+
+Example:
+
+    from mockaccino.matchers import any
+
+    mock = mockaccino.create_mock(Calc)
+    mock.sum(any(int), 2).will_return(5).always()
+    mock.replay() 
+    mock.sum(3, 2) # Returns 5
+    mock.sum(2, 2) # Returns 5
+    mock.sum(3, 1) # Raises UnexpectedCallError
+
+The only currently implemented matcher is:
+
+* any(type)- "The value should be of type 'type'"
 Roadmap
 
 1. Add support for "magic method" (__eq__, __str__, etc) mocking

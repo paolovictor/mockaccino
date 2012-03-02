@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name="mockaccino",
-      version="0.1",
+      version="0.2",
       description="Python mock library with an EasyMock flavor",
       author="Paolo Victor",
       author_email="paolovictor@gmail.com",
